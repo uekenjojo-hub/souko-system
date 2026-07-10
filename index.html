@@ -2,79 +2,179 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>倉庫棚番検索システム</title>
     <style>
-        /* 見た目を整えるCSSルール（あとから自由に変えられます） */
         body {
-            font-family: sans-serif;
-            text-align: center;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
             padding: 20px;
-            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        .search-box {
+        h1 {
+            color: #333;
             margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .search-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 450px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 15px;
         }
         input {
-            padding: 10px;
-            font-size: 16px;
-            width: 200px;
+            padding: 12px;
+            font-size: 18px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
             text-align: center;
+            font-weight: bold;
+        }
+        /* 入力ボックスごとの横幅調整 */
+        .box-1 { width: 50px; text-transform: uppercase; } /* アルファベット */
+        .box-2 { width: 50px; }
+        .box-3 { width: 60px; }
+        .box-4 { width: 60px; } /* 4つ目（空欄でもOK） */
+
+        .hyphen {
+            font-size: 20px;
+            font-weight: bold;
+            color: #666;
         }
         button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: #007bff;
+            padding: 12px 30px;
+            font-size: 18px;
+            background-color: #28a745;
             color: white;
             border: none;
             border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            max-width: 200px;
         }
-        .image-container {
-            margin-top: 20px;
+        button:hover {
+            background-color: #218838;
+        }
+        .result-container {
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
         }
         img {
             max-width: 100%;
             height: auto;
-            border: 2px solid #ccc;
-            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            margin-top: 10px;
+        }
+        .overall-container {
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+        .overall-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-    <h1>倉庫棚番検索システム</h1>
+    <h1>📦 倉庫棚番検索システム</h1>
 
-    <div class="search-box">
-        <input type="text" id="shelfInput" placeholder="例: C-3-20">
-        <button onclick="searchShelf()">検索</button>
+    <div class="overall-container">
+        <div class="overall-title">【 全体案内図 】</div>
+        <img src="overall.png" alt="全体案内図" onerror="this.style.display='none';">
     </div>
 
-    <div class="image-container">
-        <img id="shelfImage" src="" alt="ここに棚の画像が表示されます" style="display: none;">
+    <div class="search-container">
+        <p style="margin-top:0; color:#555; font-size:14px;">棚番を分けて入力してください</p>
+        <div class="input-group">
+            <input type="text" id="val1" class="box-1" placeholder="C" maxlength="2" autofocus>
+            <span class="hyphen">-</span>
+            <input type="text" id="val2" class="box-2" placeholder="3" maxlength="3">
+            <span class="hyphen">-</span>
+            <input type="text" id="val3" class="box-3" placeholder="02" maxlength="3">
+            <span class="hyphen">-</span>
+            <input type="text" id="val4" class="box-4" placeholder="1" maxlength="3">
+        </div>
+        <button onclick="searchShelf()">検索する</button>
+    </div>
+
+    <div class="result-container" id="resultContainer" style="display: none;">
+        <h2 id="resultTitle" style="color: #333; font-size: 18px;"></h2>
+        <img id="shelfImage" src="" alt="棚の位置画像">
     </div>
 
     <script>
-        // ボタンが押されたら動く魔法のプログラム
+        // 次の入力ボックスへ自動で移動するおまけ機能
+        setupAutoMove('val1', 'val2');
+        setupAutoMove('val2', 'val3');
+        setupAutoMove('val3', 'val4');
+
+        function setupAutoMove(currentId, nextId) {
+            document.getElementById(currentId).addEventListener('input', function() {
+                if (this.value.length >= this.maxLength) {
+                    document.getElementById(nextId).focus();
+                }
+            });
+        }
+
         function searchShelf() {
-            // 1. 入力された文字を読み取る
-            var inputValue = document.getElementById("shelfInput").value;
-            
-            // 何も入力されていない時は何もしない
-            if (inputValue === "") {
-                alert("棚番を入力してください！");
+            var v1 = document.getElementById('val1').value.trim().toUpperCase();
+            var v2 = document.getElementById('val2').value.trim();
+            var v3 = document.getElementById('val3').value.trim();
+            var v4 = document.getElementById('val4').value.trim();
+
+            // 必須入力チェック（最初の3つが入っていればOK）
+            if (!v1 || !v2 || !v3) {
+                alert("棚番を正しく入力してください。");
                 return;
             }
 
-            // 2. 画像のファイル名を作る (例: images/C-3-20.png)
-            var imagePath = "images/" + inputValue + ".png";
+            // 入力された文字をハイフンで合体させる
+            var shelfCode = v1 + "-" + v2 + "-" + v3;
+            if (v4 !== "") {
+                shelfCode += "-" + v4; // 4つ目があれば後ろに繋ぐ
+            }
 
-            // 3. 画面の画像パーツを書き換える
-            var imgElement = document.getElementById("shelfImage");
-            imgElement.src = imagePath;
-            imgElement.style.display = "inline-block"; // 画像を表示する
-            imgElement.alt = inputValue + " の配置画像";
+            // 画像のパスを作成 (images/C-3-02-1.png の形になります)
+            var imagePath = "images/" + shelfCode + ".png";
+
+            var resultContainer = document.getElementById('resultContainer');
+            var resultTitle = document.getElementById('resultTitle');
+            var shelfImage = document.getElementById('shelfImage');
+
+            // 画像をセットして表示
+            shelfImage.src = imagePath;
+            resultTitle.innerText = "検索結果: " + shelfCode;
+            resultContainer.style.display = 'block';
+
+            // 画像が見つからなかったときのエラー処理
+            shelfImage.onerror = function() {
+                alert("該当する棚番の画像（" + shelfCode + ".png）が見つかりません。imagesフォルダに対象の画像があるか確認してください。");
+                resultContainer.style.display = 'none';
+            };
         }
     </script>
-
 </body>
 </html>
