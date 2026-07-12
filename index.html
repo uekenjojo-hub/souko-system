@@ -109,7 +109,7 @@
     <div class="search-container">
         <p style="margin-top:0; color:#555; font-size:14px;">棚番を入力してEnterを押してください</p>
         <div class="input-group">
-            <input type="text" id="val1" class="box-1" placeholder="C" maxlength="2" autofocus>
+            <input type="text" id="val1" class="box-1" placeholder="C" maxlength="2" inputmode="search" autocapitalize="characters" autocomplete="off" autofocus>
             <span class="hyphen">-</span>
             <input type="text" id="val2" class="box-2" placeholder="3" maxlength="3" inputmode="numeric" pattern="[0-9]*">
             <span class="hyphen">-</span>
@@ -134,7 +134,7 @@
         function setupEnterMove(currentId, nextId) {
             document.getElementById(currentId).addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
-                    e.preventDefault(); // 改行を防ぐ
+                    e.preventDefault(); 
                     document.getElementById(nextId).focus();
                 }
             });
@@ -181,7 +181,7 @@
             resultTitle.innerText = "検索結果: " + shelfCode;
             resultContainer.style.display = 'block';
 
-            // キーボードを閉じる（スマホ対策）
+            // キーボードを閉じる
             document.activeElement.blur();
 
             shelfImage.onerror = function() {
