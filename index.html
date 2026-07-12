@@ -49,7 +49,7 @@
         .box-1 { width: 50px; text-transform: uppercase; } /* アルファベット */
         .box-2 { width: 50px; }
         .box-3 { width: 60px; }
-        .box-4 { width: 60px; } /* 4つ目（空欄でもOK） */
+        .box-4 { width: 60px; } 
 
         .hyphen {
             font-size: 20px;
@@ -107,15 +107,15 @@
     </div>
 
     <div class="search-container">
-        <p style="margin-top:0; color:#555; font-size:14px;">棚番を分けて入力してください</p>
+        <p style="margin-top:0; color:#555; font-size:14px;">棚番を入力してEnterを押してください</p>
         <div class="input-group">
             <input type="text" id="val1" class="box-1" placeholder="C" maxlength="2" autofocus>
             <span class="hyphen">-</span>
-            <input type="text" id="val2" class="box-2" placeholder="3" maxlength="3">
+            <input type="text" id="val2" class="box-2" placeholder="3" maxlength="3" inputmode="numeric" pattern="[0-9]*">
             <span class="hyphen">-</span>
-            <input type="text" id="val3" class="box-3" placeholder="02" maxlength="3">
+            <input type="text" id="val3" class="box-3" placeholder="02" maxlength="3" inputmode="numeric" pattern="[0-9]*">
             <span class="hyphen">-</span>
-            <input type="text" id="val4" class="box-4" placeholder="1" maxlength="3">
+            <input type="text" id="val4" class="box-4" placeholder="1" maxlength="3" inputmode="numeric" pattern="[0-9]*">
         </div>
         <button onclick="searchShelf()">検索する</button>
     </div>
@@ -126,18 +126,35 @@
     </div>
 
     <script>
-        // 次の入力ボックスへ自動で移動するおまけ機能
-        setupAutoMove('val1', 'val2');
-        setupAutoMove('val2', 'val3');
-        setupAutoMove('val3', 'val4');
+        // Enterキーで次のマスに移動する設定
+        setupEnterMove('val1', 'val2');
+        setupEnterMove('val2', 'val3');
+        setupEnterMove('val3', 'val4');
 
-        function setupAutoMove(currentId, nextId) {
-            document.getElementById(currentId).addEventListener('input', function() {
-                if (this.value.length >= this.maxLength) {
+        function setupEnterMove(currentId, nextId) {
+            document.getElementById(currentId).addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // 改行を防ぐ
                     document.getElementById(nextId).focus();
                 }
             });
         }
+
+        // 3つ目のマスでEnterを押したとき（4つ目が空欄で決定する場合）
+        document.getElementById('val3').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && document.getElementById('val4').value.trim() === '') {
+                e.preventDefault();
+                searchShelf();
+            }
+        });
+
+        // 4つ目のマス（最後の検索窓）でEnterを押したら検索開始
+        document.getElementById('val4').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchShelf();
+            }
+        });
 
         function searchShelf() {
             var v1 = document.getElementById('val1').value.trim().toUpperCase();
@@ -145,33 +162,30 @@
             var v3 = document.getElementById('val3').value.trim();
             var v4 = document.getElementById('val4').value.trim();
 
-            // 必須入力チェック（最初の3つが入っていればOK）
             if (!v1 || !v2 || !v3) {
                 alert("棚番を正しく入力してください。");
                 return;
             }
 
-            // 入力された文字をハイフンで合体させる
             var shelfCode = v1 + "-" + v2 + "-" + v3;
             if (v4 !== "") {
-                shelfCode += "-" + v4; // 4つ目があれば後ろに繋ぐ
+                shelfCode += "-" + v4;
             }
 
-            // 画像のパスを作成 (images/C-3-02-1.png の形になります)
             var imagePath = "images/" + shelfCode + ".png";
-
             var resultContainer = document.getElementById('resultContainer');
             var resultTitle = document.getElementById('resultTitle');
             var shelfImage = document.getElementById('shelfImage');
 
-            // 画像をセットして表示
             shelfImage.src = imagePath;
             resultTitle.innerText = "検索結果: " + shelfCode;
             resultContainer.style.display = 'block';
 
-            // 画像が見つからなかったときのエラー処理
+            // キーボードを閉じる（スマホ対策）
+            document.activeElement.blur();
+
             shelfImage.onerror = function() {
-                alert("該当する棚番の画像（" + shelfCode + ".png）が見つかりません。imagesフォルダに対象の画像があるか確認してください。");
+                alert("該当する棚番の画像（" + shelfCode + ".png）が見つかりません。");
                 resultContainer.style.display = 'none';
             };
         }
