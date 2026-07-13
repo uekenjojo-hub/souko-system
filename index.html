@@ -19,7 +19,6 @@
             margin-bottom: 20px;
             font-size: 24px;
         }
-        /* 💡 機能3：お知らせ用の掲示板スタイル */
         .notice-container {
             background: #fff3cd;
             border: 1px solid #ffeeba;
@@ -90,7 +89,6 @@
         }
         .btn-search:hover { background-color: #218838; }
 
-        /* 💡 機能1&2：倉庫整理エリアのスタイル */
         .management-box {
             background: #e9ecef;
             padding: 15px;
@@ -199,9 +197,7 @@
 
         <div class="management-box">
             <div class="management-title">⚙️ この棚のロケーション管理</div>
-            
             <button class="btn-complete" onclick="submitOrder('【整理完了】点検を行いました')">この棚の整理を完了する</button>
-            
             <textarea id="shelfMemo" class="memo-area" rows="2" placeholder="例：A商品をこの棚へ移動した、など"></textarea>
             <button class="btn-memo" onclick="submitMemo()">上記のメモを記録する</button>
         </div>
@@ -210,7 +206,6 @@
     <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
 
     <script>
-        // 現在検索されている棚番を一時的に覚える変数
         var currentActiveShelf = "";
 
         setupEnterMove('val1', 'val2');
@@ -240,11 +235,10 @@
             }
         });
 
-        // 📝 Googleフォームへログを送信する中心のプログラム
         function sendToGoogleForm(shelf, memoText) {
             var formId = "1FAIpQLSfVi2yyXN9zmFmWCTiL_t3y23XqNkupaB6Exi70OPlbLqb0Og";
-            var shelfEntry = "entry.2085768012";  // 棚番ボックス
-            var memoEntry = "entry.2022800064";   // メモボックス
+            var shelfEntry = "entry.2085768012";  
+            var memoEntry = "entry.2022800064";   
             
             var sendUrl = "https://docs.google.com/forms/d/e/" + formId + "/formResponse?" 
                         + shelfEntry + "=" + encodeURIComponent(shelf) + "&"
@@ -254,17 +248,30 @@
             iframe.src = sendUrl;
         }
 
+        // 💡 数字の前に「0」をつけて2桁にする便利な関数
+        function padZero(value) {
+            var str = value.trim();
+            // 入力された文字が数字で、かつ1桁の場合だけ「0」を前につける
+            if (str.length === 1 && !isNaN(str)) {
+                return "0" + str;
+            }
+            return str;
+        }
+
         function searchShelf() {
             var v1 = document.getElementById('val1').value.trim().toUpperCase();
-            var v2 = document.getElementById('val2').value.trim();
-            var v3 = document.getElementById('val3').value.trim();
-            var v4 = document.getElementById('val4').value.trim();
+            
+            // 💡 2つ目と3つ目と4つ目の入力欄に、自動で0を補う設定を適用
+            var v2 = document.getElementById('val2').value.trim(); // 3段目はそのまま(C-3)
+            var v3 = padZero(document.getElementById('val3').value); // 2桁に補正(例: 2→02)
+            var v4 = document.getElementById('val4').value.trim(); // 4つ目もそのまま(C-3-02-1)
 
             if (!v1 || !v2 || !v3) {
                 alert("棚番を正しく入力してください。");
                 return;
             }
 
+            // 正しいファイル名（C-3-02-1など）を組み立てる
             currentActiveShelf = v1 + "-" + v2 + "-" + v3;
             if (v4 !== "") {
                 currentActiveShelf += "-" + v4;
@@ -279,12 +286,9 @@
             resultTitle.innerText = "検索結果: " + currentActiveShelf;
             resultContainer.style.display = 'block';
             
-            // 新しい棚を検索したらメモ欄を空にする
             document.getElementById('shelfMemo').value = "";
-
             document.activeElement.blur();
 
-            // 検索時の通常ログ（メモ欄には「通常検索」と記録）
             sendToGoogleForm(currentActiveShelf, "通常検索");
 
             shelfImage.onerror = function() {
@@ -293,14 +297,12 @@
             };
         }
 
-        // 💡 「整理完了」ボタン用
         function submitOrder(actionText) {
             if(!currentActiveShelf) return;
             sendToGoogleForm(currentActiveShelf, actionText);
             alert(currentActiveShelf + " の整理完了を記録しました！");
         }
 
-        // 💡 「メモ記録」ボタン用
         function submitMemo() {
             if(!currentActiveShelf) return;
             var memoVal = document.getElementById('shelfMemo').value.trim();
@@ -310,7 +312,7 @@
             }
             sendToGoogleForm(currentActiveShelf, "【メモ】 " + memoVal);
             alert("メモを記録しました！");
-            document.getElementById('shelfMemo').value = ""; // 送信後に入力欄をクリア
+            document.getElementById('shelfMemo').value = "";
         }
     </script>
 </body>
