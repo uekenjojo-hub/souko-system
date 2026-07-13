@@ -125,6 +125,8 @@
         <img id="shelfImage" src="" alt="棚の位置画像">
     </div>
 
+    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
+
     <script>
         // Enterキーで次のマスに移動する設定
         setupEnterMove('val1', 'val2');
@@ -148,13 +150,26 @@
             }
         });
 
-        // 4つ目のマス（最後の検索窓）でEnterを押したら検索開始
+        // 4つ目のマスでEnterを押したら検索開始
         document.getElementById('val4').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 searchShelf();
             }
         });
+
+        // 📝 Googleフォームにログを送信する関数
+        function sendLog(shelfCode) {
+            var formId = "1FAIpQLSfVi2yyXN9zmFmWCTiL_t3y23XqNkupaB6Exi70OPlbLqb0Og";
+            var entryId = "entry.2085768012";
+            
+            // 送信用のアドレスを組み立て
+            var sendUrl = "https://docs.google.com/forms/d/e/" + formId + "/formResponse?" + entryId + "=" + encodeURIComponent(shelfCode);
+            
+            // 隠しフレームを使って、画面を切り替えずに裏でこっそり送信
+            var iframe = document.getElementById('hidden_iframe');
+            iframe.src = sendUrl;
+        }
 
         function searchShelf() {
             var v1 = document.getElementById('val1').value.trim().toUpperCase();
@@ -183,6 +198,9 @@
 
             // キーボードを閉じる
             document.activeElement.blur();
+
+            // 🚀 検索が実行されたのでログを送信！
+            sendLog(shelfCode);
 
             shelfImage.onerror = function() {
                 alert("該当する棚番の画像（" + shelfCode + ".png）が見つかりません。");
