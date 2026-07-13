@@ -19,6 +19,26 @@
             margin-bottom: 20px;
             font-size: 24px;
         }
+        /* 💡 機能3：お知らせ用の掲示板スタイル */
+        .notice-container {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 450px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .notice-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
         .search-container {
             background: white;
             padding: 20px;
@@ -37,16 +57,16 @@
             gap: 5px;
             margin-bottom: 15px;
         }
-        input {
+        input, textarea {
             padding: 12px;
             font-size: 18px;
             border: 2px solid #ddd;
             border-radius: 4px;
             text-align: center;
             font-weight: bold;
+            box-sizing: border-box;
         }
-        /* 入力ボックスごとの横幅調整 */
-        .box-1 { width: 50px; text-transform: uppercase; } /* アルファベット */
+        .box-1 { width: 50px; text-transform: uppercase; }
         .box-2 { width: 50px; }
         .box-3 { width: 60px; }
         .box-4 { width: 60px; } 
@@ -56,7 +76,7 @@
             font-weight: bold;
             color: #666;
         }
-        button {
+        .btn-search {
             padding: 12px 30px;
             font-size: 18px;
             background-color: #28a745;
@@ -68,9 +88,57 @@
             width: 100%;
             max-width: 200px;
         }
-        button:hover {
-            background-color: #218838;
+        .btn-search:hover { background-color: #218838; }
+
+        /* 💡 機能1&2：倉庫整理エリアのスタイル */
+        .management-box {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: left;
         }
+        .management-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+        .btn-complete {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+        .btn-complete:hover { background-color: #0069d9; }
+        
+        .memo-area {
+            width: 100%;
+            font-size: 15px;
+            font-family: inherit;
+            text-align: left;
+            resize: none;
+            margin-bottom: 8px;
+            font-weight: normal;
+        }
+        .btn-memo {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .btn-memo:hover { background-color: #5a6268; }
+
         .result-container {
             width: 100%;
             max-width: 600px;
@@ -101,6 +169,11 @@
 
     <h1>📦 倉庫棚番検索システム</h1>
 
+    <div class="notice-container">
+        <div class="notice-title">📢 倉庫整理のお知らせ</div>
+        <div>本日、C棚周辺の在庫カウントを行います。整理が終わった棚は下の「整理完了」ボタンを押して記録してください。</div>
+    </div>
+
     <div class="overall-container">
         <div class="overall-title">【 全体案内図 】</div>
         <img src="overall.png" alt="全体案内図" onerror="this.style.display='none';">
@@ -117,18 +190,29 @@
             <span class="hyphen">-</span>
             <input type="text" id="val4" class="box-4" placeholder="1" maxlength="3" inputmode="numeric" pattern="[0-9]*">
         </div>
-        <button onclick="searchShelf()">検索する</button>
+        <button class="btn-search" onclick="searchShelf()">検索する</button>
     </div>
 
     <div class="result-container" id="resultContainer" style="display: none;">
         <h2 id="resultTitle" style="color: #333; font-size: 18px;"></h2>
         <img id="shelfImage" src="" alt="棚の位置画像">
+
+        <div class="management-box">
+            <div class="management-title">⚙️ この棚のロケーション管理</div>
+            
+            <button class="btn-complete" onclick="submitOrder('【整理完了】点検を行いました')">この棚の整理を完了する</button>
+            
+            <textarea id="shelfMemo" class="memo-area" rows="2" placeholder="例：A商品をこの棚へ移動した、など"></textarea>
+            <button class="btn-memo" onclick="submitMemo()">上記のメモを記録する</button>
+        </div>
     </div>
 
     <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
 
     <script>
-        // Enterキーで次のマスに移動する設定
+        // 現在検索されている棚番を一時的に覚える変数
+        var currentActiveShelf = "";
+
         setupEnterMove('val1', 'val2');
         setupEnterMove('val2', 'val3');
         setupEnterMove('val3', 'val4');
@@ -142,7 +226,6 @@
             });
         }
 
-        // 3つ目のマスでEnterを押したとき（4つ目が空欄で決定する場合）
         document.getElementById('val3').addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && document.getElementById('val4').value.trim() === '') {
                 e.preventDefault();
@@ -150,7 +233,6 @@
             }
         });
 
-        // 4つ目のマスでEnterを押したら検索開始
         document.getElementById('val4').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -158,15 +240,16 @@
             }
         });
 
-        // 📝 Googleフォームにログを送信する関数
-        function sendLog(shelfCode) {
+        // 📝 Googleフォームへログを送信する中心のプログラム
+        function sendToGoogleForm(shelf, memoText) {
             var formId = "1FAIpQLSfVi2yyXN9zmFmWCTiL_t3y23XqNkupaB6Exi70OPlbLqb0Og";
-            var entryId = "entry.2085768012";
+            var shelfEntry = "entry.2085768012";  // 棚番ボックス
+            var memoEntry = "entry.2022800064";   // メモボックス
             
-            // 送信用のアドレスを組み立て
-            var sendUrl = "https://docs.google.com/forms/d/e/" + formId + "/formResponse?" + entryId + "=" + encodeURIComponent(shelfCode);
+            var sendUrl = "https://docs.google.com/forms/d/e/" + formId + "/formResponse?" 
+                        + shelfEntry + "=" + encodeURIComponent(shelf) + "&"
+                        + memoEntry + "=" + encodeURIComponent(memoText);
             
-            // 隠しフレームを使って、画面を切り替えずに裏でこっそり送信
             var iframe = document.getElementById('hidden_iframe');
             iframe.src = sendUrl;
         }
@@ -182,30 +265,52 @@
                 return;
             }
 
-            var shelfCode = v1 + "-" + v2 + "-" + v3;
+            currentActiveShelf = v1 + "-" + v2 + "-" + v3;
             if (v4 !== "") {
-                shelfCode += "-" + v4;
+                currentActiveShelf += "-" + v4;
             }
 
-            var imagePath = "images/" + shelfCode + ".png";
+            var imagePath = "images/" + currentActiveShelf + ".png";
             var resultContainer = document.getElementById('resultContainer');
             var resultTitle = document.getElementById('resultTitle');
             var shelfImage = document.getElementById('shelfImage');
 
             shelfImage.src = imagePath;
-            resultTitle.innerText = "検索結果: " + shelfCode;
+            resultTitle.innerText = "検索結果: " + currentActiveShelf;
             resultContainer.style.display = 'block';
+            
+            // 新しい棚を検索したらメモ欄を空にする
+            document.getElementById('shelfMemo').value = "";
 
-            // キーボードを閉じる
             document.activeElement.blur();
 
-            // 🚀 検索が実行されたのでログを送信！
-            sendLog(shelfCode);
+            // 検索時の通常ログ（メモ欄には「通常検索」と記録）
+            sendToGoogleForm(currentActiveShelf, "通常検索");
 
             shelfImage.onerror = function() {
-                alert("該当する棚番の画像（" + shelfCode + ".png）が見つかりません。");
+                alert("該当する棚番の画像（" + currentActiveShelf + ".png）が見つかりません。");
                 resultContainer.style.display = 'none';
             };
+        }
+
+        // 💡 「整理完了」ボタン用
+        function submitOrder(actionText) {
+            if(!currentActiveShelf) return;
+            sendToGoogleForm(currentActiveShelf, actionText);
+            alert(currentActiveShelf + " の整理完了を記録しました！");
+        }
+
+        // 💡 「メモ記録」ボタン用
+        function submitMemo() {
+            if(!currentActiveShelf) return;
+            var memoVal = document.getElementById('shelfMemo').value.trim();
+            if(!memoVal) {
+                alert("メモが入力されていません。");
+                return;
+            }
+            sendToGoogleForm(currentActiveShelf, "【メモ】 " + memoVal);
+            alert("メモを記録しました！");
+            document.getElementById('shelfMemo').value = ""; // 送信後に入力欄をクリア
         }
     </script>
 </body>
